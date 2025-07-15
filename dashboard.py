@@ -3,37 +3,50 @@ import plotly.express as px
 import pandas as pd
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
+from dotenv import load_dotenv
 import os
+import collections
 
-# Limpieza de caché
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
+client_id = os.getenv("SPOTIFY_CLIENT_ID")
+client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
+
+# Limpieza de caché para evitar conflictos con tokens antiguos
 if os.path.exists(".cache"):
     os.remove(".cache")
 
-# Autenticación
+# Autenticación con Spotify
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id="3a95ca6c989945adbc805092d876e376",
-    client_secret="f9b538ab158745e8a77f8000887545f3",
+    client_id=client_id,
+    client_secret=client_secret,
     redirect_uri="http://127.0.0.1:8881/callback",
     scope="user-top-read",
     open_browser=True,
     show_dialog=True
 ))
 
-# Dashboard
+# Título del dashboard
 st.title("🎧 Tus canciones más escuchadas (últimos 6 meses)")
 
 try:
     results = sp.current_user_top_tracks(limit=20, time_range='medium_term')
     data = []
+    genre_counter = collections.Counter()
 
     for track in results['items']:
+        artist = track['artists'][0]
+        artist_info = sp.artist(artist['id'])  # Obtener info del artista
+        genres = artist_info.get('genres', [])
+        for g in genres:
+            genre_counter[g] += 1
+
         data.append({
             'Track': track['name'],
-            'Artist': track['artists'][0]['name'],
+            'Artist': artist['name'],
             'Album': track['album']['name'],
             'Release Date': track['album']['release_date'],
-            'Duration (min)': round(track['duration_ms'] / 60000, 2),
-            'Popularity': track['popularity']
+            'Duration (min)': round(track['duration_ms'] / 60000, 2)
         })
 
     df = pd.DataFrame(data)
@@ -41,13 +54,16 @@ try:
     st.write("### Tabla general:")
     st.dataframe(df)
 
-    st.write("### Canciones más populares")
-    fig_pop = px.bar(df.sort_values(by='Popularity', ascending=False),
-                     x='Track', y='Popularity', color='Artist',
-                     title='Ranking por popularidad')
-    st.plotly_chart(fig_pop, use_container_width=True)
+    # Gráfico de torta con géneros
+    if genre_counter:
+        genre_df = pd.DataFrame(genre_counter.items(), columns=['Genre', 'Count'])
+        fig_genre = px.pie(genre_df, values='Count', names='Genre',
+                           title='Distribución de géneros en tus canciones favoritas')
+        st.plotly_chart(fig_genre, use_container_width=True)
+    else:
+        st.warning("No se pudieron extraer géneros.")
 
-    st.write("### Duración de canciones")
+    # Gráfico adicional: duración
     fig_dur = px.bar(df.sort_values(by='Duration (min)', ascending=False),
                      x='Track', y='Duration (min)', color='Artist',
                      title='Duración en minutos')
@@ -55,5 +71,4 @@ try:
 
 except Exception as e:
     st.error(f"Error inesperado: {e}")
-
 
