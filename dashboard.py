@@ -69,6 +69,26 @@ try:
                      title='Duración en minutos')
     st.plotly_chart(fig_dur, use_container_width=True)
 
+        # Obtener artistas más escuchados directamente
+    top_artists = sp.current_user_top_artists(limit=20, time_range='medium_term')
+    artist_data = []
+
+    for artist in top_artists['items']:
+        artist_data.append({
+            'Artist': artist['name'],
+            'Genres': ", ".join(artist['genres']),
+            'Followers': artist['followers']['total'],
+            'Popularity': artist['popularity']
+        })
+
+    artist_df = pd.DataFrame(artist_data)
+
+    st.write("### 🎤 Tus artistas más escuchados (últimos 6 meses)")
+    st.dataframe(artist_df)
+
+    fig_top_artists = px.bar(artist_df, x='Artist', y='Popularity', title='Popularidad de tus artistas favoritos')
+    st.plotly_chart(fig_top_artists, use_container_width=True)
+
 except Exception as e:
     st.error(f"Error inesperado: {e}")
 
