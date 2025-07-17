@@ -1,0 +1,24 @@
+{
+  "top_artists": [
+    { "name": "Bad Bunny", "popularity": 95, "genres": ["reggaeton", "latin pop"] },
+    { "name": "Arctic Monkeys", "popularity": 88, "genres": ["indie rock", "garage rock"] },
+    { "name": "Kendrick Lamar", "popularity": 90, "genres": ["hip hop", "rap"] },
+    { "name": "The Weeknd", "popularity": 92, "genres": ["pop", "r&b"] }
+  ],
+  "top_tracks": [
+  { "name": "Tití Me Preguntó", "artist": "Bad Bunny", "popularity": 98 },
+  { "name": "505", "artist": "Arctic Monkeys", "popularity": 93 },
+  { "name": "Die For You", "artist": "The Weeknd", "popularity": 95 },
+  { "name": "HUMBLE.", "artist": "Kendrick Lamar", "popularity": 96 }
+],
+  "genres": {
+    "reggaeton": 5,
+    "latin pop": 3,
+    "indie rock": 4,
+    "garage rock": 2,
+    "hip hop": 6,
+    "rap": 5,
+    "pop": 4,
+    "r&b": 3
+  }
+}
