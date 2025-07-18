@@ -7,7 +7,6 @@ export default function ArtistTable({ artists }) {
           <tr>
             <th className="p-2 border">Artista</th>
             <th className="p-2 border">Géneros</th>
-            <th className="p-2 border">Popularidad</th>
           </tr>
         </thead>
         <tbody>
@@ -15,7 +14,6 @@ export default function ArtistTable({ artists }) {
             <tr key={idx} className="text-center bg-gray-900 odd:bg-gray-800">
               <td className="p-2 border">{artist.name}</td>
               <td className="p-2 border">{artist.genres.join(", ")}</td>
-              <td className="p-2 border">{artist.popularity}</td>
             </tr>
           ))}
         </tbody>

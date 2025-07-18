@@ -5,11 +5,12 @@
     { "name": "Kendrick Lamar", "popularity": 90, "genres": ["hip hop", "rap"] },
     { "name": "The Weeknd", "popularity": 92, "genres": ["pop", "r&b"] }
   ],
-  "top_tracks": [
-  { "name": "Tití Me Preguntó", "artist": "Bad Bunny", "popularity": 98 },
-  { "name": "505", "artist": "Arctic Monkeys", "popularity": 93 },
-  { "name": "Die For You", "artist": "The Weeknd", "popularity": 95 },
-  { "name": "HUMBLE.", "artist": "Kendrick Lamar", "popularity": 96 }
+"top_tracks": [
+  { "name": "Tití Me Preguntó", "artist": "Bad Bunny" },
+  { "name": "505", "artist": "Arctic Monkeys" },
+  { "name": "Die For You", "artist": "The Weeknd" },
+  { "name": "HUMBLE.", "artist": "Kendrick Lamar" },
+  { "name": "Todo de Ti", "artist": "Rauw Alejandro" }
 ],
   "genres": {
     "reggaeton": 5,

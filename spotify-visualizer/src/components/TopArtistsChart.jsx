@@ -1,26 +1,20 @@
-import Plot from "react-plotly.js";
-
 export default function TopArtistsChart({ artists }) {
   return (
-    <div className="mb-12">
-      <h2 className="text-2xl font-semibold mb-2">🔥 Artistas Más Escuchados</h2>
-      <Plot
-        data={[
-          {
-            type: "bar",
-            x: artists.map((a) => a.name),
-            y: artists.map((a) => a.popularity),
-            marker: { color: "rgba(30, 144, 255, 0.6)" },
-          },
-        ]}
-        layout={{
-          width: 600,
-          height: 400,
-          title: "Popularidad",
-          paper_bgcolor: "#000",
-          font: { color: "white" },
-        }}
-      />
+    <div className="mt-12">
+      <h2 className="text-2xl font-semibold mb-4">🔥 Artistas más escuchados (último año)</h2>
+      <ol className="list-decimal list-inside space-y-4">
+        {artists.map((artist, index) => (
+          <li key={index} className="flex items-center bg-gray-800 rounded p-3 shadow-md">
+            <img
+              src={artist.image}
+              alt={artist.name}
+              className="w-8 h-8 rounded-full mr-3 object-cover"
+            />
+            <span className="font-medium">{artist.name}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
+
