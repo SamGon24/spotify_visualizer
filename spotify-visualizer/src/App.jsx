@@ -26,34 +26,46 @@ export default function App() {
   }, []);
 
   if (!data) {
-    return <div className="text-center text-white mt-10">Cargando datos...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white text-xl font-medium">
+        Cargando datos...
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white font-sans px-4 py-10">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-5xl font-extrabold text-center mb-12 bg-gradient-to-r from-green-400 to-blue-500 text-transparent bg-clip-text drop-shadow">
-          🎧 Spotify Visualizer
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-800 text-white font-sans px-4 py-10">
+      <div className="max-w-6xl mx-auto space-y-12">
+        <header className="text-center">
+          <h1 className="text-5xl font-extrabold bg-gradient-to-r from-green-400 via-cyan-400 to-blue-500 text-transparent bg-clip-text drop-shadow-lg">
+            🎧 Spotify Visualizer
+          </h1>
+          <p className="mt-3 text-zinc-400 text-lg">
+            Tus hábitos musicales, visualizados con estilo
+          </p>
+        </header>
 
-        <TopArtistsList artists={data.top_artists} />
+        <section className="bg-zinc-900 p-6 rounded-2xl shadow-md">
+          <TopArtistsList artists={data.top_artists} />
+        </section>
 
-        <hr className="my-12 border-gray-600" />
+        <section className="bg-zinc-900 p-6 rounded-2xl shadow-md">
+          <GenrePieChart genres={data.genres} />
+        </section>
 
-        <GenrePieChart genres={data.genres} />
+        <section className="bg-zinc-900 p-6 rounded-2xl shadow-md">
+          <TopTracksList tracks={data.top_tracks} />
+        </section>
 
-        <hr className="my-12 border-gray-600" />
+        <section className="bg-zinc-900 p-6 rounded-2xl shadow-md">
+          <ArtistTable artists={data.top_artists} />
+        </section>
 
-        <TopTracksList tracks={data.top_tracks} />
-
-        <hr className="my-12 border-gray-600" />
-
-        <ArtistTable artists={data.top_artists} />
-
-        <footer className="text-center text-sm text-gray-400 mt-12">
+        <footer className="text-center text-sm text-zinc-500 pt-8">
           Desarrollado por Samu — {new Date().getFullYear()}
         </footer>
       </div>
     </div>
   );
 }
+
