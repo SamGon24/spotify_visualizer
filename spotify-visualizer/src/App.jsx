@@ -1,71 +1,84 @@
-import { useEffect, useState } from "react";
-import GenrePieChart from "./components/genrePieChart";
+import { useState } from "react";
+import GenrePieChart from "./components/GenrePieChart";
 import TopArtistsList from "./components/TopArtistsChart";
-import ArtistTable from "./components/ArtistTable";
 import TopTracksList from "./components/TopTracksChart";
 
 export default function App() {
+  const [view, setView] = useState(null);
   const [data, setData] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [artistsRes, genresRes, tracksRes] = await Promise.all([
-        fetch("http://localhost:5000/top-artists").then((r) => r.json()),
-        fetch("http://localhost:5000/genres").then((r) => r.json()),
-        fetch("http://localhost:5000/top-tracks").then((r) => r.json()),
-      ]);
+  const fetchData = async (type) => {
+    let endpoint = "";
+    if (type === "artists") endpoint = "top-artists";
+    if (type === "genres") endpoint = "genres";
+    if (type === "tracks") endpoint = "top-tracks";
 
-      setData({
-        top_artists: artistsRes,
-        genres: genresRes,
-        top_tracks: tracksRes,
-      });
-    };
-
-    fetchData();
-  }, []);
-
-  if (!data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-white text-xl font-medium">
-        Cargando datos...
-      </div>
-    );
-  }
+    const res = await fetch(`http://localhost:5000/${endpoint}`);
+    const json = await res.json();
+    setData(json);
+    setView(type);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-800 text-white font-sans px-4 py-10">
-      <div className="max-w-6xl mx-auto space-y-12">
-        <header className="text-center">
-          <h1 className="text-5xl font-extrabold bg-gradient-to-r from-green-400 via-cyan-400 to-blue-500 text-transparent bg-clip-text drop-shadow-lg">
-            🎧 Spotify Visualizer
-          </h1>
-          <p className="mt-3 text-zinc-400 text-lg">
-            Tus hábitos musicales, visualizados con estilo
-          </p>
-        </header>
+    <div className="min-h-screen bg-gradient-to-tr from-black via-zinc-900 to-black text-white font-sans px-4 py-10 relative overflow-hidden">
+      {/* Fondo animado aurora */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="w-full h-full bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-green-400/10 via-purple-400/10 to-transparent blur-3xl animate-pulse" />
+      </div>
 
-        <section className="bg-zinc-900 p-6 rounded-2xl shadow-md">
-          <TopArtistsList artists={data.top_artists} />
-        </section>
+      <div className="relative z-10 max-w-5xl mx-auto">
+        {!view && (
+          <div className="text-center space-y-8">
+            <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-purple-400 to-pink-400 drop-shadow mb-4">
+              🎧 Spotify Visualizer
+            </h1>
+            <p className="text-gray-400 text-lg mb-6">
+              Visualiza tus estadísticas musicales de forma interactiva
+            </p>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+              <button
+                onClick={() => fetchData("artists")}
+                className="bg-gradient-to-br from-green-500 to-teal-500 hover:from-green-400 hover:to-teal-400 text-white px-8 py-3 rounded-2xl text-lg font-semibold shadow-lg transition hover:scale-105"
+              >
+                🎤 Ver Top Artistas
+              </button>
+              <button
+                onClick={() => fetchData("tracks")}
+                className="bg-gradient-to-br from-purple-500 to-fuchsia-500 hover:from-purple-400 hover:to-fuchsia-400 text-white px-8 py-3 rounded-2xl text-lg font-semibold shadow-lg transition hover:scale-105"
+              >
+                🎶 Ver Top Canciones
+              </button>
+              <button
+                onClick={() => fetchData("genres")}
+                className="bg-gradient-to-br from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white px-8 py-3 rounded-2xl text-lg font-semibold shadow-lg transition hover:scale-105"
+              >
+                🎼 Ver Géneros
+              </button>
+            </div>
+          </div>
+        )}
 
-        <section className="bg-zinc-900 p-6 rounded-2xl shadow-md">
-          <GenrePieChart genres={data.genres} />
-        </section>
+        {view && (
+          <div className="mt-10">
+            <button
+              onClick={() => {
+                setView(null);
+                setData(null);
+              }}
+              className="text-blue-400 underline hover:text-blue-300 transition text-sm mb-6"
+            >
+              ⬅ Volver al inicio
+            </button>
 
-        <section className="bg-zinc-900 p-6 rounded-2xl shadow-md">
-          <TopTracksList tracks={data.top_tracks} />
-        </section>
-
-        <section className="bg-zinc-900 p-6 rounded-2xl shadow-md">
-          <ArtistTable artists={data.top_artists} />
-        </section>
-
-        <footer className="text-center text-sm text-zinc-500 pt-8">
-          Desarrollado por Samu — {new Date().getFullYear()}
-        </footer>
+            {view === "artists" && data && <TopArtistsList artists={data} />}
+            {view === "tracks" && data && <TopTracksList tracks={data} />}
+            {view === "genres" && data && <GenrePieChart genres={data} />}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+
 
