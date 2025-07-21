@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 body {
-  @apply antialiased;
   font-family: 'Inter', sans-serif;
 }
 
