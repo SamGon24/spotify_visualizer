@@ -20,58 +20,63 @@ export default function App() {
   };
 
   return (
-    <div className="container py-5">
-      {!view && (
-        <div className="text-center">
-          <h1 className="display-4 fw-bold text-gradient mb-3">
-            🎧 Spotify Visualizer
-          </h1>
-          <p className="text-secondary mb-4">
-            Visualiza tus estadísticas musicales de forma interactiva
-          </p>
-          <div className="d-flex flex-column flex-md-row justify-content-center gap-3">
-            <button
-              className="btn btn-success btn-lg"
-              onClick={() => fetchData("artists")}
-            >
-              🎤 Ver Top Artistas
-            </button>
-            <button
-              className="btn btn-primary btn-lg"
-              onClick={() => fetchData("tracks")}
-            >
-              🎶 Ver Top Canciones
-            </button>
-            <button
-              className="btn btn-danger btn-lg"
-              onClick={() => fetchData("genres")}
-            >
-              🎼 Ver Géneros
-            </button>
+    <div className="bg-dark text-white min-vh-100 py-5">
+      <div className="container-lg bg-secondary bg-opacity-10 rounded-4 p-5 shadow position-relative">
+        {!view && (
+          <div className="text-center">
+            <h1 className="display-4 fw-bold text-gradient mb-4">
+              🎧 Spotify Visualizer
+            </h1>
+            <p className="lead text-light mb-4">
+              Visualiza tus estadísticas musicales de forma interactiva.
+            </p>
+            <div className="d-flex flex-column flex-md-row justify-content-center gap-3">
+              <button
+                onClick={() => fetchData("artists")}
+                className="btn btn-success btn-lg shadow-sm"
+              >
+                🎤 Ver Top Artistas
+              </button>
+              <button
+                onClick={() => fetchData("tracks")}
+                className="btn btn-primary btn-lg shadow-sm"
+              >
+                🎶 Ver Top Canciones
+              </button>
+              <button
+                onClick={() => fetchData("genres")}
+                className="btn btn-danger btn-lg shadow-sm"
+              >
+                🎼 Ver Géneros
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {view && (
-        <div className="mt-5">
-          <button
-            onClick={() => {
-              setView(null);
-              setData(null);
-            }}
-            className="btn btn-link text-light mb-3"
-          >
-            ⬅ Volver al inicio
-          </button>
+        {view && (
+          <div className="mt-5">
+            <button
+              onClick={() => {
+                setView(null);
+                setData(null);
+              }}
+              className="btn btn-outline-light mb-4"
+            >
+              ⬅ Volver al inicio
+            </button>
 
-          {view === "artists" && data && <TopArtistsList artists={data} />}
-          {view === "tracks" && data && <TopTracksList tracks={data} />}
-          {view === "genres" && data && <GenrePieChart genres={data} />}
-        </div>
-      )}
+            <div className="bg-light bg-opacity-10 p-4 rounded shadow">
+              {view === "artists" && data && <TopArtistsList artists={data} />}
+              {view === "tracks" && data && <TopTracksList tracks={data} />}
+              {view === "genres" && data && <GenrePieChart genres={data} />}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
 
 
 

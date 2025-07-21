@@ -1,20 +1,24 @@
-export default function TopArtistsChart({ artists }) {
+export default function TopArtistsList({ artists }) {
   return (
-    <div className="mt-12">
-      <h2 className="text-2xl font-semibold mb-4">🔥 Artistas más escuchados (último año)</h2>
-      <ol className="list-decimal list-inside space-y-4">
-        {artists.map((artist, index) => (
-          <li key={index} className="flex items-center bg-gray-800 rounded p-3 shadow-md">
+    <div className="container mt-5">
+      <h2 className="text-center mb-4">🎤 Top 10 Artistas</h2>
+      <ul className="list-group list-group-flush">
+        {artists.slice(0, 10).map((artist, index) => (
+          <li key={index} className="list-group-item bg-dark text-white d-flex align-items-center gap-3 shadow-sm">
+            <span className="fs-5 fw-bold me-2">#{index + 1}</span>
             <img
               src={artist.image}
               alt={artist.name}
-              className="w-8 h-8 rounded-full mr-3 object-cover"
+              className="rounded-circle"
+              style={{ width: "50px", height: "50px", objectFit: "cover" }}
             />
-            <span className="font-medium">{artist.name}</span>
+            <span className="fs-6">{artist.name}</span>
           </li>
         ))}
-      </ol>
+      </ul>
     </div>
   );
 }
+
+
 
