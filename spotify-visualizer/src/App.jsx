@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GenrePieChart from "./components/GenrePieChart";
 import TopArtistsList from "./components/TopArtistsChart";
 import TopTracksList from "./components/TopTracksChart";
@@ -6,107 +6,128 @@ import TopTracksList from "./components/TopTracksChart";
 export default function App() {
   const [view, setView] = useState(null);
   const [data, setData] = useState(null);
-  const [range, setRange] = useState("medium_term");
+  const [timeRange, setTimeRange] = useState("long_term");
+  const [profile, setProfile] = useState(null); // ⬅ Nuevo estado
 
-  const fetchData = async (type, time_range = "medium_term") => {
+  const fetchData = async (type, range = timeRange) => {
     let endpoint = "";
-    if (type === "artists") endpoint = `top-artists?range=${time_range}`;
+    if (type === "artists") endpoint = "top-artists";
     if (type === "genres") endpoint = "genres";
     if (type === "tracks") endpoint = "top-tracks";
 
-    const res = await fetch(`http://localhost:5000/${endpoint}`);
+    const res = await fetch(`http://localhost:5000/${endpoint}?time_range=${range}`);
     const json = await res.json();
     setData(json);
     setView(type);
+    setTimeRange(range);
   };
 
-  const handleRangeChange = (newRange) => {
-    setRange(newRange);
-    fetchData("artists", newRange);
+  const fetchProfile = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/profile");
+      const json = await res.json();
+      setProfile(json);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
   };
 
-  return (
-    <div className="min-vh-100 bg-dark text-light p-5">
-      <div className="container">
-        {!view && (
-          <div className="text-center">
-            <h1 className="display-4 fw-bold mb-4">🎧 Spotify Visualizer</h1>
-            <p className="lead mb-5">Visualiza tus estadísticas musicales</p>
-            <div className="d-flex flex-column flex-md-row gap-3 justify-content-center">
-              <button
-                onClick={() => fetchData("artists", range)}
-                className="btn btn-success btn-lg"
-              >
-                🎤 Ver Top Artistas
-              </button>
-              <button
-                onClick={() => fetchData("tracks")}
-                className="btn btn-primary btn-lg"
-              >
-                🎶 Ver Top Canciones
-              </button>
-              <button
-                onClick={() => fetchData("genres")}
-                className="btn btn-danger btn-lg"
-              >
-                🎼 Ver Géneros
-              </button>
-            </div>
-          </div>
-        )}
+  useEffect(() => {
+    fetchProfile(); // Llama al iniciar
+  }, []);
 
-        {view && (
-          <div className="mt-5">
-            <button
-              onClick={() => {
-                setView(null);
-                setData(null);
-              }}
-              className="btn btn-link mb-4"
-            >
-              ⬅ Volver al inicio
-            </button>
-
-            {view === "artists" && data && (
-              <>
-                <div className="mb-4 d-flex gap-2">
-                  <button
-                    className={`btn ${
-                      range === "short_term" ? "btn-outline-light" : "btn-outline-secondary"
-                    }`}
-                    onClick={() => handleRangeChange("short_term")}
-                  >
-                    Último mes
-                  </button>
-                  <button
-                    className={`btn ${
-                      range === "medium_term" ? "btn-outline-light" : "btn-outline-secondary"
-                    }`}
-                    onClick={() => handleRangeChange("medium_term")}
-                  >
-                    Últimos 6 meses
-                  </button>
-                  <button
-                    className={`btn ${
-                      range === "long_term" ? "btn-outline-light" : "btn-outline-secondary"
-                    }`}
-                    onClick={() => handleRangeChange("long_term")}
-                  >
-                    Último año
-                  </button>
-                </div>
-                <TopArtistsList artists={data} />
-              </>
-            )}
-
-            {view === "tracks" && data && <TopTracksList tracks={data} />}
-            {view === "genres" && data && <GenrePieChart genres={data} />}
-          </div>
-        )}
-      </div>
+  const renderTimeButtons = () => (
+    <div className="d-flex gap-2 justify-content-center my-3">
+      <button onClick={() => fetchData(view, "short_term")} className="btn btn-outline-primary btn-sm">Último mes</button>
+      <button onClick={() => fetchData(view, "medium_term")} className="btn btn-outline-primary btn-sm">Últimos 6 meses</button>
+      <button onClick={() => fetchData(view, "long_term")} className="btn btn-outline-primary btn-sm">Último año</button>
     </div>
   );
+
+return (
+  <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-dark text-white position-relative p-4">
+    <div
+      className="position-absolute top-0 start-0 w-100 h-100"
+      style={{
+        background: "radial-gradient(circle at top left, #1db95410, #000000 80%)",
+        zIndex: 0,
+      }}
+    ></div>
+
+    <div className="container position-relative z-1 text-center py-5">
+      {!view && (
+        <>
+          <h1 className="display-3 fw-bold mb-3">
+            <span className="text-success">Spotify</span> Stats 🎧
+          </h1>
+
+          {profile && (
+            <div>
+              <div className="card-body">
+                <img
+                  src={profile.image}
+                  alt="User"
+                  className="rounded-circle mb-3"
+                  width={90}
+                  height={90}
+                />
+                <h4 className="card-title mb-1">{profile.display_name}</h4>
+                <p className="card-text text-muted small mb-0">
+                </p>
+              </div>
+            </div>
+          )}
+
+          <p className="lead text-light mb-4">
+          </p>
+
+          <div className="d-flex flex-column flex-md-row gap-3 justify-content-center">
+            <button
+              onClick={() => fetchData("artists")}
+              className="btn btn-success btn-lg px-4 py-3 shadow"
+            >
+              🎤 Top Artistas
+            </button>
+            <button
+              onClick={() => fetchData("tracks")}
+              className="btn btn-danger btn-lg px-4 py-3 shadow"
+            >
+              🎶 Top Canciones
+            </button>
+            <button
+              onClick={() => fetchData("genres")}
+              className="btn btn-warning btn-lg px-4 py-3 shadow"
+            >
+              🎼 Géneros
+            </button>
+          </div>
+        </>
+      )}
+
+      {view && (
+        <div className="mt-4">
+          <button
+            onClick={() => {
+              setView(null);
+              setData(null);
+            }}
+            className="btn btn-outline-light mb-3"
+          >
+            ⬅ Volver al inicio
+          </button>
+          {renderTimeButtons()}
+          {view === "artists" && data && <TopArtistsList artists={data} />}
+          {view === "tracks" && data && <TopTracksList tracks={data} />}
+          {view === "genres" && data && <GenrePieChart genres={data} />}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 }
+
+
 
 
 
