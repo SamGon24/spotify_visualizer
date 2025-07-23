@@ -71,13 +71,16 @@ def profile():
     access_token = request.args.get('access_token')
     if not access_token:
         return jsonify({"error": "No access_token provided"}), 401
-    sp = spotipy.Spotify(auth=access_token)
-    user = sp.current_user()
-    return jsonify({
-        'display_name': user.get('display_name'),
-        'country': user.get('country'),
-        'image': user['images'][0]['url'] if user.get('images') else None
-    })
+    try:
+        sp = spotipy.Spotify(auth=access_token)
+        user = sp.current_user()
+        return jsonify({
+            'display_name': user.get('display_name'),
+            'country': user.get('country'),
+            'image': user['images'][0]['url'] if user.get('images') else None
+        })
+    except spotipy.exceptions.SpotifyException as e:
+        return jsonify({"error": "Invalid or expired token", "details": str(e)}), 401
 
 
 @app.route('/login')
