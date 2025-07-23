@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import GenrePieChart from "./components/GenrePieChart";
-import TopArtistsList from "./components/TopArtistsChart";
-import TopTracksList from "./components/TopTracksChart";
+import GenrePieChart from "src/components/GenrePieChart";
+import TopArtistsList from "src/components/TopArtistsChart";
+import TopTracksList from "src/components/TopTracksChart";
 
 export default function App() {
   const [view, setView] = useState(null);
