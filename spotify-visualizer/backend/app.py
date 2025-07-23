@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect
 from flask_cors import CORS
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
@@ -9,12 +9,37 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-
+# Home
 @app.route('/')
 def home():
     return jsonify({"message": "Backend de Spotify Visualizer activo."})
 
+# Login - Redirige a Spotify
+@app.route('/login')
+def login():
+    sp_oauth = SpotifyOAuth(
+        client_id=os.getenv("SPOTIPY_CLIENT_ID"),
+        client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
+        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
+        scope="user-top-read user-read-email"
+    )
+    auth_url = sp_oauth.get_authorize_url()
+    return redirect(auth_url)
 
+# Callback - Intercambia código por token
+@app.route('/callback')
+def callback():
+    code = request.args.get('code')
+    sp_oauth = SpotifyOAuth(
+        client_id=os.getenv("SPOTIPY_CLIENT_ID"),
+        client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
+        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
+        scope="user-top-read user-read-email"
+    )
+    token_info = sp_oauth.get_access_token(code)
+    return jsonify(token_info)
+
+# Top Tracks
 @app.route('/top-tracks')
 def top_tracks():
     access_token = request.args.get('access_token')
@@ -32,7 +57,7 @@ def top_tracks():
     } for t in results['items']]
     return jsonify(tracks)
 
-
+# Top Artists
 @app.route('/top-artists')
 def top_artists():
     access_token = request.args.get('access_token')
@@ -48,7 +73,7 @@ def top_artists():
     } for a in results['items']]
     return jsonify(artists)
 
-
+# Genres
 @app.route('/genres')
 def genres():
     access_token = request.args.get('access_token')
@@ -65,35 +90,19 @@ def genres():
     genres_data = [{'genre': g[0], 'count': g[1]} for g in sorted_genres]
     return jsonify(genres_data)
 
-
+# User Profile
 @app.route('/profile')
 def profile():
     access_token = request.args.get('access_token')
     if not access_token:
         return jsonify({"error": "No access_token provided"}), 401
-    try:
-        sp = spotipy.Spotify(auth=access_token)
-        user = sp.current_user()
-        return jsonify({
-            'display_name': user.get('display_name'),
-            'country': user.get('country'),
-            'image': user['images'][0]['url'] if user.get('images') else None
-        })
-    except spotipy.exceptions.SpotifyException as e:
-        return jsonify({"error": "Invalid or expired token", "details": str(e)}), 401
-
-
-@app.route('/login')
-def login():
-    sp_oauth = SpotifyOAuth(
-        client_id=os.getenv("SPOTIPY_CLIENT_ID"),
-        client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
-        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
-        scope="user-top-read user-read-email"
-    )
-    token_info = sp_oauth.get_access_token(as_dict=True)
-    return jsonify(token_info)
-
+    sp = spotipy.Spotify(auth=access_token)
+    user = sp.current_user()
+    return jsonify({
+        'display_name': user.get('display_name'),
+        'country': user.get('country'),
+        'image': user['images'][0]['url'] if user.get('images') else None
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
