@@ -1,118 +1,116 @@
-from flask import Flask, jsonify, request, redirect
-from flask_cors import CORS
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-from dotenv import load_dotenv
 import os
+from flask import Flask, redirect, request, jsonify
+from flask_cors import CORS
+from spotipy.oauth2 import SpotifyOAuth
+import spotipy
 
-load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Home
-@app.route('/')
-def home():
-    return jsonify({"message": "Backend de Spotify Visualizer activo."})
+# Token cache
+token_info = None
 
-# Login - Redirige a Spotify
+# Setup SpotifyOAuth object
+def get_spotify_oauth():
+    return SpotifyOAuth(
+        client_id=os.getenv("SPOTIPY_CLIENT_ID"),
+        client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
+        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
+        scope="user-top-read user-read-email"
+    )
 
-@app.route('/login')
+@app.route("/login")
 def login():
-    sp_oauth = SpotifyOAuth(
-        client_id=os.getenv("SPOTIPY_CLIENT_ID"),
-        client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
-        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
-        scope="user-top-read user-read-email"
-    )
-    token_info = sp_oauth.get_access_token(as_dict=True)
-    access_token = token_info["access_token"]
-    
-    frontend_url = os.getenv("FRONTEND_URL")  # 👈 Asegúrate de definir esto en tu .env
-    redirect_url = f"{frontend_url}?access_token={access_token}"
-    
-    return redirect(redirect_url)
+    sp_oauth = get_spotify_oauth()
+    auth_url = sp_oauth.get_authorize_url()
+    return redirect(auth_url)
 
-
-# Callback - Intercambia código por token
-@app.route('/callback')
+@app.route("/callback")
 def callback():
-    code = request.args.get('code')
-    sp_oauth = SpotifyOAuth(
-        client_id=os.getenv("SPOTIPY_CLIENT_ID"),
-        client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
-        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
-        scope="user-top-read user-read-email"
-    )
-    token_info = sp_oauth.get_access_token(code)
-    return jsonify(token_info)
+    global token_info
+    sp_oauth = get_spotify_oauth()
 
-# Top Tracks
-@app.route('/top-tracks')
-def top_tracks():
-    access_token = request.args.get('access_token')
-    if not access_token:
-        return jsonify({"error": "No access_token provided"}), 401
-    sp = spotipy.Spotify(auth=access_token)
-    time_range = request.args.get('time_range', 'long_term')
-    results = sp.current_user_top_tracks(limit=20, time_range=time_range)
-    tracks = [{
-        'name': t['name'],
-        'artist': t['artists'][0]['name'],
-        'album': t['album']['name'],
-        'image': t['album']['images'][0]['url'],
-        'preview_url': t['preview_url']
-    } for t in results['items']]
-    return jsonify(tracks)
+    code = request.args.get("code")
+    if not code:
+        return "Missing code", 400
 
-# Top Artists
-@app.route('/top-artists')
-def top_artists():
-    access_token = request.args.get('access_token')
-    if not access_token:
-        return jsonify({"error": "No access_token provided"}), 401
-    sp = spotipy.Spotify(auth=access_token)
-    time_range = request.args.get('time_range', 'long_term')
-    results = sp.current_user_top_artists(limit=10, time_range=time_range)
-    artists = [{
-        'name': a['name'],
-        'image': a['images'][0]['url'] if a['images'] else None,
-        'genres': a['genres']
-    } for a in results['items']]
-    return jsonify(artists)
+    try:
+        token_info = sp_oauth.get_access_token(code, as_dict=True)
+        access_token = token_info["access_token"]
+        frontend_url = os.getenv("FRONTEND_URL")
+        return redirect(f"{frontend_url}?access_token={access_token}")
+    except Exception as e:
+        print("Error getting token:", e)
+        return "Internal Server Error", 500
 
-# Genres
-@app.route('/genres')
-def genres():
-    access_token = request.args.get('access_token')
-    if not access_token:
-        return jsonify({"error": "No access_token provided"}), 401
-    sp = spotipy.Spotify(auth=access_token)
-    time_range = request.args.get('time_range', 'long_term')
-    results = sp.current_user_top_artists(limit=50, time_range=time_range)
-    genre_counts = {}
-    for artist in results['items']:
-        for genre in artist['genres']:
-            genre_counts[genre] = genre_counts.get(genre, 0) + 1
-    sorted_genres = sorted(genre_counts.items(), key=lambda x: x[1], reverse=True)
-    genres_data = [{'genre': g[0], 'count': g[1]} for g in sorted_genres]
-    return jsonify(genres_data)
+def get_spotify_client():
+    global token_info
+    if not token_info:
+        return None
+    return spotipy.Spotify(auth=token_info["access_token"])
 
-# User Profile
-@app.route('/profile')
+@app.route("/profile")
 def profile():
-    access_token = request.args.get('access_token')
-    if not access_token:
-        return jsonify({"error": "No access_token provided"}), 401
-    sp = spotipy.Spotify(auth=access_token)
+    sp = get_spotify_client()
+    if not sp:
+        return jsonify({"error": "Unauthorized"}), 401
+
     user = sp.current_user()
     return jsonify({
-        'display_name': user.get('display_name'),
-        'country': user.get('country'),
-        'image': user['images'][0]['url'] if user.get('images') else None
+        "display_name": user["display_name"],
+        "image": user["images"][0]["url"] if user["images"] else None
     })
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+@app.route("/top-tracks")
+def top_tracks():
+    sp = get_spotify_client()
+    if not sp:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    time_range = request.args.get("time_range", "long_term")
+    results = sp.current_user_top_tracks(limit=10, time_range=time_range)
+    tracks = [
+        {
+            "name": track["name"],
+            "artist": track["artists"][0]["name"],
+            "image": track["album"]["images"][0]["url"]
+        } for track in results["items"]
+    ]
+    return jsonify(tracks)
+
+@app.route("/top-artists")
+def top_artists():
+    sp = get_spotify_client()
+    if not sp:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    time_range = request.args.get("time_range", "long_term")
+    results = sp.current_user_top_artists(limit=10, time_range=time_range)
+    artists = [
+        {
+            "name": artist["name"],
+            "image": artist["images"][0]["url"] if artist["images"] else None
+        } for artist in results["items"]
+    ]
+    return jsonify(artists)
+
+@app.route("/genres")
+def genres():
+    sp = get_spotify_client()
+    if not sp:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    time_range = request.args.get("time_range", "long_term")
+    results = sp.current_user_top_artists(limit=50, time_range=time_range)
+    genre_count = {}
+    for artist in results["items"]:
+        for genre in artist["genres"]:
+            genre_count[genre] = genre_count.get(genre, 0) + 1
+
+    sorted_genres = sorted(genre_count.items(), key=lambda x: x[1], reverse=True)
+    return jsonify([
+        {"genre": genre, "count": count} for genre, count in sorted_genres
+    ])
 
 
 
