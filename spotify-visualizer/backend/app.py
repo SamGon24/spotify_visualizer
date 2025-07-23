@@ -15,6 +15,7 @@ def home():
     return jsonify({"message": "Backend de Spotify Visualizer activo."})
 
 # Login - Redirige a Spotify
+
 @app.route('/login')
 def login():
     sp_oauth = SpotifyOAuth(
@@ -23,8 +24,14 @@ def login():
         redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
         scope="user-top-read user-read-email"
     )
-    auth_url = sp_oauth.get_authorize_url()
-    return redirect(auth_url)
+    token_info = sp_oauth.get_access_token(as_dict=True)
+    access_token = token_info["access_token"]
+    
+    frontend_url = os.getenv("FRONTEND_URL")  # 👈 Asegúrate de definir esto en tu .env
+    redirect_url = f"{frontend_url}?access_token={access_token}"
+    
+    return redirect(redirect_url)
+
 
 # Callback - Intercambia código por token
 @app.route('/callback')
