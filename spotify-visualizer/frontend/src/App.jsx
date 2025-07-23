@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import GenrePieChart from "src/components/GenrePieChart";
-import TopArtistsList from "src/components/TopArtistsChart";
-import TopTracksList from "src/components/TopTracksChart";
+import GenrePieChart from "./components/genrePieChart";
+import TopArtistsList from "./components/TopArtistsChart";
+import TopTracksList from "./components/TopTracksChart";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
