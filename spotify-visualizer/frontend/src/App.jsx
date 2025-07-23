@@ -3,11 +3,13 @@ import GenrePieChart from "src/components/GenrePieChart";
 import TopArtistsList from "src/components/TopArtistsChart";
 import TopTracksList from "src/components/TopTracksChart";
 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
 export default function App() {
   const [view, setView] = useState(null);
   const [data, setData] = useState(null);
   const [timeRange, setTimeRange] = useState("long_term");
-  const [profile, setProfile] = useState(null); // ⬅ Nuevo estado
+  const [profile, setProfile] = useState(null);
 
   const fetchData = async (type, range = timeRange) => {
     let endpoint = "";
@@ -15,7 +17,7 @@ export default function App() {
     if (type === "genres") endpoint = "genres";
     if (type === "tracks") endpoint = "top-tracks";
 
-    const res = await fetch(`http://localhost:5000/${endpoint}?time_range=${range}`);
+    const res = await fetch(`${BASE_URL}/${endpoint}?time_range=${range}`);
     const json = await res.json();
     setData(json);
     setView(type);
@@ -24,7 +26,7 @@ export default function App() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch("http://localhost:5000/profile");
+      const res = await fetch(`${BASE_URL}/profile`);
       const json = await res.json();
       setProfile(json);
     } catch (err) {
@@ -33,8 +35,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchProfile(); // Llama al iniciar
+    fetchProfile();
   }, []);
+
 
   const renderTimeButtons = () => (
     <div className="d-flex gap-2 justify-content-center my-3">
