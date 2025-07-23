@@ -11,13 +11,35 @@ export default function App() {
   const [timeRange, setTimeRange] = useState("long_term");
   const [profile, setProfile] = useState(null);
 
+  // Guarda el token si viene en la URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("access_token");
+    if (token) {
+      localStorage.setItem("access_token", token);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   const fetchData = async (type, range = timeRange) => {
     let endpoint = "";
     if (type === "artists") endpoint = "top-artists";
     if (type === "genres") endpoint = "genres";
     if (type === "tracks") endpoint = "top-tracks";
 
-    const res = await fetch(`${BASE_URL}/${endpoint}?time_range=${range}`);
+    const token = localStorage.getItem("access_token");
+
+    const res = await fetch(`${BASE_URL}/${endpoint}?time_range=${range}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (res.status === 401) {
+      window.location.href = `${BASE_URL}/login`;
+      return;
+    }
+
     const json = await res.json();
     setData(json);
     setView(type);
@@ -26,18 +48,29 @@ export default function App() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/profile`);
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${BASE_URL}/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status === 401) {
+        window.location.href = `${BASE_URL}/login`;
+        return;
+      }
+
       const json = await res.json();
       setProfile(json);
     } catch (err) {
       console.error("Error fetching profile:", err);
+      window.location.href = `${BASE_URL}/login`;
     }
   };
 
   useEffect(() => {
     fetchProfile();
   }, []);
-
 
   const renderTimeButtons = () => (
     <div className="d-flex gap-2 justify-content-center my-3">
@@ -47,94 +80,79 @@ export default function App() {
     </div>
   );
 
-return (
-  <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-dark text-white position-relative p-4">
-    <div
-      className="position-absolute top-0 start-0 w-100 h-100"
-      style={{
-        background: "radial-gradient(circle at top left, #1db95410, #000000 80%)",
-        zIndex: 0,
-      }}
-    ></div>
+  return (
+    <div className="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-dark text-white position-relative p-4">
+      <div
+        className="position-absolute top-0 start-0 w-100 h-100"
+        style={{
+          background: "radial-gradient(circle at top left, #1db95410, #000000 80%)",
+          zIndex: 0,
+        }}
+      ></div>
 
-    <div className="container position-relative z-1 text-center py-5">
-      {!view && (
-        <>
-          <h1 className="display-3 fw-bold mb-3">
-            <span className="text-success">Spotify</span> Stats 🎧
-          </h1>
+      <div className="container position-relative z-1 text-center py-5">
+        {!view && (
+          <>
+            <h1 className="display-3 fw-bold mb-3">
+              <span className="text-success">Spotify</span> Stats 🎧
+            </h1>
 
-          {profile && (
-            <div>
-              <div className="card-body">
-                <img
-                  src={profile.image}
-                  alt="User"
-                  className="rounded-circle mb-3"
-                  width={90}
-                  height={90}
-                />
-                <h4 className="card-title mb-1">{profile.display_name}</h4>
-                <p className="card-text text-muted small mb-0">
-                </p>
+            {profile && (
+              <div>
+                <div className="card-body">
+                  <img
+                    src={profile.image}
+                    alt="User"
+                    className="rounded-circle mb-3"
+                    width={90}
+                    height={90}
+                  />
+                  <h4 className="card-title mb-1">{profile.display_name}</h4>
+                </div>
               </div>
+            )}
+
+            <div className="d-flex flex-column flex-md-row gap-3 justify-content-center">
+              <button
+                onClick={() => fetchData("artists")}
+                className="btn btn-success btn-lg px-4 py-3 shadow"
+              >
+                🎤 Top Artistas
+              </button>
+              <button
+                onClick={() => fetchData("tracks")}
+                className="btn btn-danger btn-lg px-4 py-3 shadow"
+              >
+                🎶 Top Canciones
+              </button>
+              <button
+                onClick={() => fetchData("genres")}
+                className="btn btn-warning btn-lg px-4 py-3 shadow"
+              >
+                🎼 Géneros
+              </button>
             </div>
-          )}
+          </>
+        )}
 
-          <p className="lead text-light mb-4">
-          </p>
-
-          <div className="d-flex flex-column flex-md-row gap-3 justify-content-center">
+        {view && (
+          <div className="mt-4">
             <button
-              onClick={() => fetchData("artists")}
-              className="btn btn-success btn-lg px-4 py-3 shadow"
+              onClick={() => {
+                setView(null);
+                setData(null);
+              }}
+              className="btn btn-outline-light mb-3"
             >
-              🎤 Top Artistas
+              ⬅ Volver al inicio
             </button>
-            <button
-              onClick={() => fetchData("tracks")}
-              className="btn btn-danger btn-lg px-4 py-3 shadow"
-            >
-              🎶 Top Canciones
-            </button>
-            <button
-              onClick={() => fetchData("genres")}
-              className="btn btn-warning btn-lg px-4 py-3 shadow"
-            >
-              🎼 Géneros
-            </button>
+            {renderTimeButtons()}
+            {view === "artists" && data && <TopArtistsList artists={data} />}
+            {view === "tracks" && data && <TopTracksList tracks={data} />}
+            {view === "genres" && data && <GenrePieChart genres={data} />}
           </div>
-        </>
-      )}
-
-      {view && (
-        <div className="mt-4">
-          <button
-            onClick={() => {
-              setView(null);
-              setData(null);
-            }}
-            className="btn btn-outline-light mb-3"
-          >
-            ⬅ Volver al inicio
-          </button>
-          {renderTimeButtons()}
-          {view === "artists" && data && <TopArtistsList artists={data} />}
-          {view === "tracks" && data && <TopTracksList tracks={data} />}
-          {view === "genres" && data && <GenrePieChart genres={data} />}
-        </div>
-      )}
+        )}
+      </div>
     </div>
-  </div>
-);
-
+  );
 }
-
-
-
-
-
-
-
-
-
