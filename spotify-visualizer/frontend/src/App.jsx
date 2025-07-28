@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import GenrePieChart from "./components/genrePieChart";
-import TopArtistsList from "./components/TopArtistsChart";
-import TopTracksList from "./components/TopTracksChart";
+import GenrePieChart from "src/components/GenrePieChart";
+import TopArtistsList from "src/components/TopArtistsChart";
+import TopTracksList from "src/components/TopTracksChart";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -11,34 +11,15 @@ export default function App() {
   const [timeRange, setTimeRange] = useState("long_term");
   const [profile, setProfile] = useState(null);
 
-  // Guarda el token si viene en la URL
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("access_token");
-    if (token) {
-      localStorage.setItem("access_token", token);
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, []);
-
   const fetchData = async (type, range = timeRange) => {
     let endpoint = "";
     if (type === "artists") endpoint = "top-artists";
     if (type === "genres") endpoint = "genres";
     if (type === "tracks") endpoint = "top-tracks";
 
-    const token = localStorage.getItem("access_token");
-
     const res = await fetch(`${BASE_URL}/${endpoint}?time_range=${range}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      credentials: "include"
     });
-
-    if (res.status === 401) {
-      window.location.href = `${BASE_URL}/login`;
-      return;
-    }
 
     const json = await res.json();
     setData(json);
@@ -48,15 +29,12 @@ export default function App() {
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem("access_token");
       const res = await fetch(`${BASE_URL}/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include"
       });
 
       if (res.status === 401) {
-        window.location.href = `${BASE_URL}/login`;
+        window.location.href = `${BASE_URL}/login`; // Redirige si no está autenticado
         return;
       }
 
@@ -64,12 +42,11 @@ export default function App() {
       setProfile(json);
     } catch (err) {
       console.error("Error fetching profile:", err);
-      window.location.href = `${BASE_URL}/login`;
     }
   };
 
   useEffect(() => {
-    fetchProfile();
+    fetchProfile(); // Cargar perfil al iniciar
   }, []);
 
   const renderTimeButtons = () => (
@@ -108,6 +85,8 @@ export default function App() {
                     height={90}
                   />
                   <h4 className="card-title mb-1">{profile.display_name}</h4>
+                  <p className="card-text text-muted small mb-0">
+                  </p>
                 </div>
               </div>
             )}
